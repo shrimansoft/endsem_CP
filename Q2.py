@@ -1,37 +1,15 @@
-def column(a, i):
-    """
-    Returns a specific column
-    of a multidimensional list
-    """
-    return [row[i] for row in a]
-
-
-def data(file, char_):
-    """
-    Open a file that contains
-    data to fit | Format (x,y)
-    char_ : separator character
-           ' '     <== Space delimited
-           '\t'    <== Tabs delimited
-           ','     <== Comma delimitedk
-    """
-    data = open(file, "r")
-    line = [line.rstrip().split(char_) for line in data]
-    x = column(line, 0)
-    y = column(line, 1)
-    for i in range(len(x)):
-        x[i] = float(x[i])
-        y[i] = float(y[i])
-    return x, y
+from lib import *
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 X, Y = data("data.txt", ",")
 
 
-print(X, Y)
+# print(X, Y)
 
 
-def legendre_basis(n, x):
+def legendre_basis(x, n):
     if n == 0:
         return 1
     if n == 1:
@@ -48,15 +26,44 @@ def legendre_basis(n, x):
         return (231 * x**6 - 315 * x**4 + 105 * x**2 - 5) / 16
 
 
-coefficients = []
+def legendre_fit(X, Y, d):
+    length = len(X)
+    p = d + 1
+    A = np.zeros((p, p))
+    b = np.zeros(p)
 
-for i in range(7):
-    num = 0
-    den = 0
-    for x, y in zip(X, Y):
-        num += y * legendre_basis(i, x)
-        den += legendre_basis(i, x) * legendre_basis(i, x)
-    coefficients.append(num / den)
+    for i in range(p):
+        for j in range(p):
+            total = 0
+            for k in range(length):
+                total += legendre_basis(X[k], j) * legendre_basis(X[k], i)
+            A[i, j] = total
+
+    for i in range(p):
+        total = 0
+        for j in range(length):
+            total += legendre_basis(X[j], i) * Y[j]
+        b[i] = total
+
+    x = lu_decomp(A, b)
+    return x
 
 
-print(coefficients)
+cofficient = legendre_fit(X, Y, 6)
+print("cofficient: ", cofficient)
+
+
+Y_value = []
+for x in X:
+    y = 0
+    for i in range(7):
+        y += cofficient[i] * legendre_basis(x, i)
+    Y_value.append(y)
+
+
+plt.plot(X, Y, "g.")
+plt.plot(X, Y_value, "orange")
+plt.show()
+
+# -------------* OUTPUT *--------------------------
+# cofficient:  [0.254211885835266, -0.17218286267747054, 0.18701530188300514, -0.11830920749508334, 0.11411855049286564, -0.0024888108366943845, -0.012384559712646365]

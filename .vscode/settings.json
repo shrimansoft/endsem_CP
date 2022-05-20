@@ -4,6 +4,10 @@
       "language": "python",
       "scheme": "file",
       "pattern": "Q2.py"
+    },
+    {
+      "language": "python",
+      "scheme": "file"
     }
   ]
 }

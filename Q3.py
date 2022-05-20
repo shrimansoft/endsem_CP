@@ -1,53 +1,71 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+from lib import *
 import numpy as np
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
+
+# ---------------* defining the variables *----------------------
+
+tp = 20 + 1
+points = tp - 2
+dx = 0.1
+dt = 0.0008
+a = dt / dx**2
+
+# -----------------* Initial State *----------------------
+
+init = np.zeros(points)
+for i in range(points):
+    init[i] = 20 * abs(np.sin(np.pi * (i + 1) * 0.1))
 
 
-def PDEexplicit(L, n, Delt, tmax, func, a, b):
-    u = [0 for x in range(n + 1)]
-    u1 = [0 for x in range(n + 1)]
-
-    # Updating Boundary conditions
-    u[0], u[n] = a, b
-    u1[0], u1[n] = a, b
-
-    Delx = L / n
-    alpha = Delt / (Delx**2)
-
-    xvalue = [0]
-    for i in range(1, n):
-        x = i * Delx
-        u[i] = func(x)
-        xvalue.append(x)
-    xvalue.append(xvalue[-1] + Delx)
-
-    t = Delt
-    while t < tmax:
-        for i in range(1, n):
-            u1[i] = alpha * u[i - 1] * (1 - 2 * alpha) * u[i] + alpha * u[i + 1]
-            u[i] = u1[i].copy()
-        t = t + Delt
-    return u, xvalue
-
-    # Function can be changed as per requirement. Now only boundary value defined.
+# -----------------* function plotter *-----------------------
 
 
-def func(x):
-    L=5
-    if x == 0:
-        return 0
-    elif x == L:
-        return 1
+def heatPloter(points, state, text):
+    x = np.arange(0, 2.1, 0.1)
+    y = np.zeros(points + 2)
+    y[1:-1] = state
+    plt.plot(x, y, label="i=" + text)
 
 
-Delx = 0.1
-Delt = 0.004
-L = 5
-t = [0.5, 1, 1.5, 5, 10]
-x = np.arange(0, L + Delx, Delx)
-for i in range(len(t)):
-    u1 = PDEexplicit(L, Delx, Delt, func, t[i])
-    u1 = np.transpose(u1)
-    u1 = u1[0]
-    plt.plot(x, u1, label=t[i])
+# heatPlotter(points, init, "initial state")
+# plt.legend()
+# plt.show()
+
+# --------------* propagator *----------------------
+
+A = np.zeros((points, points))
+
+for i in range(points):
+    A[i, i] = 1 - 2 * a
+    if i + 1 < points:
+        A[i + 1, i] = a
+        A[i, i + 1] = a
+
+# ----------------* evolving *-----------------------
+watch = [
+    0,
+    10,
+    20,
+    50,
+    100,
+    500,
+]
+for i in range(501):
+    if i == 0:
+        state = init
+    state = np.matmul(A, state)
+
+    if i in watch:
+        heatPloter(points, state, str(i))
+
 plt.legend()
 plt.show()
+
+
+# ---------* comments on the plot *-------------------
+
+# Temperature at the endpoint is zero as the boundary condition.
+# With time we are losing the heat because the boundary condition is working like a sink at zero temperature.
+# At the midpoint the temperature is rising and attains a maximum and then reducing since total heat is flowing out.
